@@ -1,6 +1,6 @@
 {
-  "name": "stocks-bot-ts",
-  "version": "0.1.0",
+  "name": "investments-bot",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
   "engines": {
