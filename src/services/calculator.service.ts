@@ -1,4 +1,7 @@
-import { IAsset } from '../interfaces';
+import {
+  IAsset,
+  TradeWithCommission,
+} from '../interfaces';
 
 export class CalculatorService {
   getChange(buyPrice: number, closePrice: number): number {
@@ -25,6 +28,20 @@ export class CalculatorService {
     ).toFixed(2);
 
     return parseFloat(totalPrice);
+  }
+
+  getInitialPrice(trades: TradeWithCommission[]): number {
+    let sum = 0;
+
+    for (let i = 0; i < trades.length; i++) {
+      const { price, quantity, commission } = trades[i];
+      sum += (
+        (price * quantity) +
+      (commission.tsCommission + commission.bankCommission)
+      );
+    }
+
+    return parseFloat(sum.toFixed(2));
   }
 
   getTodayDiff(totalBuyPrice: number, newTotalPrice: number) {

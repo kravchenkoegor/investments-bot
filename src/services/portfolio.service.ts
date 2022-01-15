@@ -190,7 +190,7 @@ export class PortfolioService implements IPortfolioService {
   }
 
   get totalCost() {
-    return this.calc.getTotalPrice(Object.values(this.portfolio));
+    return this.calc.getInitialPrice(this.trades);
   }
 
   get totalCostLatest() {
