@@ -70,7 +70,6 @@ export class App implements IApp {
       'DATABASE_URL',
       'TELEGRAM_API_TOKEN',
       'MY_TELEGRAM_ID',
-      'LAST_UPDATED',
       'TOTAL_INVESTMENTS',
     ];
 
