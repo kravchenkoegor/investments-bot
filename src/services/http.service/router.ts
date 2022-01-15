@@ -1,25 +1,25 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import {
+  batchValidateTrades,
+  validateTrade,
+} from '../../validators';
 
 const router = Router();
 
 export const apiRoutes = (prisma: PrismaClient) => {
+  const myUserId = Number(process.env.MY_TELEGRAM_ID);
+
   router.get('/trades', async (_, res) => {
-    const userId = Number(process.env.MY_TELEGRAM_ID);
-
-    if (!userId) {
-      res.json({ trades: [] });
-      return;
-    }
-
     try {
       const trades = await prisma.trade.findMany({
-        where: { userId },
+        where: { userId: myUserId },
         select: {
           secCode: true,
           price: true,
           quantity: true,
           currencyCode: true,
+          date: true,
           commission: {
             select: {
               tsCommission: true,
@@ -37,35 +37,75 @@ export const apiRoutes = (prisma: PrismaClient) => {
   });
 
   // TODO parse trades from xls report file and save them to DB
+  router.post('/trade', async (req, res) => {
+    const { userId, trade } = req.body;
+
+    if (userId !== myUserId) {
+      res.sendStatus(403);
+      return;
+    }
+
+    if (!validateTrade(trade)) {
+      res.sendStatus(400);
+      return;
+    }
+
+    try {
+      const createdTrade = await prisma.trade.create({
+        data: {
+          ...trade,
+          user: {
+            connect: {
+              userId: myUserId,
+            },
+          },
+        },
+      });
+      res.status(201).json(createdTrade);
+    } catch (error) {
+      console.log(error);
+      res.sendStatus(500);
+    }
+  });
+
   router.post('/trades', async (req, res) => {
-    // const { userId } = req.body;
+    try {
+      const { trades } = req.body;
+      if (!batchValidateTrades(trades)) {
+        res.sendStatus(400);
+        return;
+      }
 
-    // await this.prisma.$transaction(
-    //   trades
-    //     .map(trade => {
-    //       const quantity = parseInt(trade.quantity, 10);
-    //       const data = {
-    //         currencyCode: trade.currencyCode,
-    //         date: new Date(trade.date1).toISOString(),
-    //         secCode: trade.secCode,
-    //         price: parseFloat(trade.price1),
-    //         quantity: trade.side === 2 ? quantity * -1 : quantity,
-    //         commission: {
-    //           create: {
-    //             tsCommission: parseFloat(trade.tsCommission.value),
-    //             bankCommission: parseFloat(trade.bankCommission.value),
-    //           },
-    //         },
-    //         user: {
-    //           connect: { userId: Number(process.env.MY_TELEGRAM_ID) },
-    //         },
-    //       };
+      await prisma.$transaction(
+        trades
+          .map((trade: any) => {
+            const quantity = parseInt(trade.quantity, 10);
+            const data = {
+              currencyCode: trade.currencyCode,
+              date: new Date(trade.date1).toISOString(),
+              secCode: trade.secCode,
+              price: parseFloat(trade.price1),
+              quantity: trade.side === 2 ? quantity * -1 : quantity,
+              commission: {
+                create: {
+                  tsCommission: parseFloat(trade.tsCommission.value),
+                  bankCommission: parseFloat(trade.bankCommission.value),
+                },
+              },
+              user: {
+                connect: { userId: Number(process.env.MY_TELEGRAM_ID) },
+              },
+            };
 
-    //       return this.prisma.trade.create({ data });
-    //     }),
-    // );
+            return prisma.trade.create({ data });
+          }),
+      );
 
-    res.sendStatus(403);
+      res.sendStatus(200);
+    } catch (error) {
+      console.log(error);
+      res.sendStatus(500);
+    }
   });
 
   router.post('/user', async (req, res) => {

@@ -6,6 +6,7 @@ import {
 } from '../services';
 import {
   formatDateDefault,
+  getMaxDate,
   SEND_INITIAL_DATA,
   SEND_LATEST_INFO,
 } from '../constants';
@@ -21,6 +22,7 @@ interface IPortfolioService {
   portfolio: IPortfolio;
   portfolioLatest: IPortfolio;
   serverUrl: string;
+  trades: TradeWithCommission[];
 }
 
 export class PortfolioService implements IPortfolioService {
@@ -30,6 +32,7 @@ export class PortfolioService implements IPortfolioService {
   portfolio: IPortfolio;
   portfolioLatest: IPortfolio;
   serverUrl: string;
+  trades: TradeWithCommission[];
 
   constructor(
     { eventEmitter, serverUrl }:
@@ -78,7 +81,9 @@ export class PortfolioService implements IPortfolioService {
   }
 
   sendInitialData() {
-    const lastUpdated = formatDateDefault(new Date(`${process.env.LAST_UPDATED}`));
+    const lastUpdated = formatDateDefault(
+      getMaxDate(this.trades.map(({ date }) => date)),
+    );
     this.eventEmitter.emit(SEND_INITIAL_DATA, {
       lastUpdated,
       portfolio: this.portfolio,
@@ -114,9 +119,14 @@ export class PortfolioService implements IPortfolioService {
       const { data } = await axios.get<{ trades: TradeWithCommission[] }>(
         `${this.serverUrl}/api/trades`,
       );
-      const portfolio = {} as Record<string, Array<{ price: number; quantity: number; commission: number; }>>;
+      this.trades = data.trades;
 
-      for (const trade of data.trades) {
+      const portfolio = {} as Record<
+        string,
+        Array<{ price: number; quantity: number; commission: number; }>
+        >;
+
+      for (const trade of this.trades) {
         if (!portfolio[trade.secCode]) {
           portfolio[trade.secCode] = [];
         }

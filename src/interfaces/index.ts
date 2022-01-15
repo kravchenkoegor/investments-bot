@@ -27,7 +27,6 @@ export interface IMarketDataResponse {
 export interface IAsset {
   avgBuyPrice: number;
   closePrice?: number;
-  lotAmount?: number;
   quantity: number;
 }
 
