@@ -15,6 +15,7 @@ export const apiRoutes = (prisma: PrismaClient) => {
       const trades = await prisma.trade.findMany({
         where: { userId: myUserId },
         select: {
+          id: true,
           secCode: true,
           price: true,
           quantity: true,
@@ -126,6 +127,42 @@ export const apiRoutes = (prisma: PrismaClient) => {
       }
 
       res.json({ user });
+    } catch (error) {
+      console.log(error);
+      res.sendStatus(500);
+    }
+  });
+
+  router.delete('/trade/:tradeId', async (req, res) => {
+    const { userId } = req.body;
+    if (!userId || typeof userId !== 'number') {
+      return res.sendStatus(400);
+    }
+
+    const tradeId = Number(req.params.tradeId);
+    if (!tradeId) {
+      return res.sendStatus(400);
+    }
+
+    try {
+      const tradeToDelete = await prisma.trade.findFirst({
+        where: { id: tradeId },
+      });
+
+      if (!tradeToDelete) {
+        return res.sendStatus(404);
+      }
+
+      await prisma.$transaction([
+        prisma.commission.deleteMany({
+          where: { tradeId },
+        }),
+        prisma.trade.delete({
+          where: { id: tradeId },
+        }),
+      ]);
+
+      res.sendStatus(200);
     } catch (error) {
       console.log(error);
       res.sendStatus(500);
