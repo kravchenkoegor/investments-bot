@@ -8,6 +8,9 @@ import {
 } from './services';
 import { PROCESS_UPDATE } from './constants';
 
+// @ts-ignore
+import InstaSaver from './test.js';
+
 interface IApp {
   bot: BotService;
   eventEmitter: EventEmitter;
@@ -26,6 +29,9 @@ export class App implements IApp {
 
   constructor() {
     this.prisma = new PrismaClient();
+
+    // @ts-ignore
+    this.instaSaver = new InstaSaver();
   }
 
   async bootstrap() {
@@ -78,5 +84,16 @@ export class App implements IApp {
         throw new Error(`Required variable ${variable} is missing!`);
       }
     }
+  }
+
+  async savePhotoFromInsta(url: string) {
+    // @ts-ignore
+    const imageUrl = this.instaSaver.download(url);
+    console.log({ imageUrl });
+
+    this.bot.botInstance.sendPhoto(
+      process.env.MY_TELEGRAM_ID as string,
+      imageUrl,
+    );
   }
 }
