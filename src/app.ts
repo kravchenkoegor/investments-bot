@@ -48,6 +48,10 @@ export class App implements IApp {
     this.eventEmitter.on(PROCESS_UPDATE, data => {
       this.bot.botInstance.processUpdate(data);
     });
+
+    this.eventEmitter.on('SEND_IMAGE', url => {
+      this.savePhotoFromInsta(url);
+    });
   }
 
   async initPortfolio() {

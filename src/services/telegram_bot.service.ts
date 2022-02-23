@@ -53,6 +53,11 @@ export class BotService implements ITelegramBot {
         return;
       }
 
+      if (text?.startsWith('https://www.instagram.com/')) {
+        this.eventEmitter.emit('SEND_IMAGE', text);
+        return;
+      }
+
       this.eventEmitter.emit(`${text?.replace(/\//, '')}`);
     });
 
@@ -110,7 +115,8 @@ export class BotService implements ITelegramBot {
           ].join('\n\n'),
           { parse_mode: 'HTML' },
         );
-      });
+      },
+    );
   }
 
   get botInstance() {
