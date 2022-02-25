@@ -9,7 +9,7 @@ import {
 import { PROCESS_UPDATE } from './constants';
 
 // @ts-ignore
-import InstaSaver from './test.js';
+import InstaSaver from './test_2.js';
 
 interface IApp {
   bot: BotService;
@@ -92,10 +92,8 @@ export class App implements IApp {
 
   async savePhotoFromInsta(url: string) {
     // @ts-ignore
-    const imageUrl = this.instaSaver.download(url);
-    console.log({ imageUrl });
-
-    this.bot.botInstance.sendPhoto(
+    const imageUrl = await this.instaSaver.download(url);
+    await this.bot.botInstance.sendPhoto(
       process.env.MY_TELEGRAM_ID as string,
       imageUrl,
     );
